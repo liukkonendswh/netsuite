@@ -10,17 +10,23 @@ module NetSuite
       @attributes ||= {}
     end
 
+    def mut
+	@@mut ||= Mutex.new
+    end
+
     def connection(params={}, credentials={})
-      Savon.client({
-        wsdl: wsdl,
-        read_timeout: read_timeout,
-        namespaces: namespaces,
-        soap_header: auth_header(credentials).update(soap_header),
-        pretty_print_xml: true,
-        logger: logger,
-        log_level: log_level,
-        log: !silent,   # turn off logging entirely if configured
-      }.update(params))
+        mut.synchronize do
+		return Savon.client({
+        	wsdl: wsdl,
+        	read_timeout: read_timeout,
+        	namespaces: namespaces,
+        	soap_header: auth_header(credentials).update(soap_header),
+        	pretty_print_xml: true,
+        	logger: logger,
+        	log_level: log_level,
+        	log: !silent,   # turn off logging entirely if configured
+      		}.update(params))
+    	end
     end
 
     def api_version(version = nil)
